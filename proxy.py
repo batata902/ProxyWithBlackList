@@ -18,10 +18,19 @@ http_f = (
 )
 
 WORDLIST = 'blacklist.txt'
-BLACKLIST = open(WORDLIST, 'r').read().splitlines()
-BLMODE = True
+try:
+    BLACKLIST = open(WORDLIST, 'r').read().splitlines()
+except FileNotFoundError:
+    print('Arquivos base não encontrados.')
 
-WILDCARDS = open('wildcards.txt', 'r').read().splitlines()
+# Mais um try para que o uso da wordlist de wildcards seja obrigatoria
+try:
+    WILDCARDS = open('wildcards.txt', 'r').read().splitlines()
+except FileNotFoundError:
+    print('WORDLIST DE WILDCARDS NÃO ENCONTRADA')
+    exit(0)
+
+BLMODE = True
 
 def block(con):
     print('\033[31mTENTATIVA SUSPEITA BLOQUEADA\033[m')
@@ -240,7 +249,11 @@ def receiveconn(s):
     global BLACKLIST
     try:
         while True:
-            BLACKLIST = open(WORDLIST, 'r').read().splitlines() # Atualizar a lista de sites bloqueados periodicamente
+            try:
+                BLACKLIST = open(WORDLIST, 'r').read().splitlines() # Atualizar a lista de sites bloqueados periodicamente
+            except FileNotFoundError:
+                print('Arquivo de blacklist não encontrado.')
+                exit(0)
             try:
                 con, client = s.accept()
                 print(f'Conexão recebida ---> {client}')
@@ -273,7 +286,10 @@ if __name__ == '__main__':
         BLMODE = False
     if args.l:
         WORDLIST = args.l
-        BLACKLIST = open(args.l, 'r').read().splitlines()
+        try:
+            BLACKLIST = open(args.l, 'r').read().splitlines()
+        except FileNotFoundError:
+            print('Arquivo não encontrado.')
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) // Evitar o erro de porta ocupada após reiniciar o proxy
