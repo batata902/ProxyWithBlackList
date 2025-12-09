@@ -238,17 +238,20 @@ def handleconnection(con):
 
 def receiveconn(s):
     global BLACKLIST
-    while True:
-        BLACKLIST = open('blacklist.txt', 'r').read().splitlines() # Atualizar a lista de sites bloqueados periodicamente
-        try:
-            con, client = s.accept()
-            print(f'Conexão recebida ---> {client}')
-            t = threading.Thread(target=handleconnection, args=(con,)) # Joga a conexão para a função handleconnection
-            t.start()
+    try:
+        while True:
+            BLACKLIST = open(WORDLIST, 'r').read().splitlines() # Atualizar a lista de sites bloqueados periodicamente
+            try:
+                con, client = s.accept()
+                print(f'Conexão recebida ---> {client}')
+                t = threading.Thread(target=handleconnection, args=(con,)) # Joga a conexão para a função handleconnection
+                t.start()
 
-        except Exception as e:
-            print("Erro no accept:", e)
-
+            except Exception as e:
+                print("Erro no accept:", e)
+    except KeyboardInterrupt:
+        print('O USUARIO ESCOLHEU SAIR')
+        return
 
 if __name__ == '__main__':
     ip = '0.0.0.0'
@@ -270,12 +273,16 @@ if __name__ == '__main__':
         BLMODE = False
     if args.l:
         WORDLIST = args.l
-        BLACKLIST = open(WORDLIST, 'r').read().splitlines()
+        BLACKLIST = open(args.l, 'r').read().splitlines()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) // Evitar o erro de porta ocupada após reiniciar o proxy
-    s.bind((ip, port))
+    try:
+        s.bind((ip, port))
+    except OSError:
+        print('Erro: Porta já está em uso')
+        exit(0)
     s.listen(200)
 
-    print('[+] Escutando em 0.0.0.0 na porta 8080')
+    print(f'[+] Escutando em {ip} na porta {port}')
     receiveconn(s)
